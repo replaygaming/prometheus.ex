@@ -20,7 +20,11 @@ defmodule Prometheus.Erlang do
     quote bind_quoted: [fun: fun, opts: opts] do
       target = Keyword.get(opts, :to, @erlang_module)
 
-      {name, args, as, as_args} = Kernel.Utils.defdelegate(fun, opts)
+      {name, args, as, as_args} = if Kernel.function_exported?(Kernel.Utils, :defdelegate_each, 2) do
+        Kernel.Utils.defdelegate_each(fun, opts)
+      else
+        Kernel.Utils.defdelegate(fun, opts)
+      end
 
       def unquote(name)(unquote_splicing(args)) do
         Prometheus.Error.with_prometheus_error(
@@ -36,7 +40,11 @@ defmodule Prometheus.Erlang do
     quote bind_quoted: [fun: fun, opts: opts] do
       target = Keyword.get(opts, :to, @erlang_module)
 
-      {name, args, as, [spec | as_args]} = Kernel.Utils.defdelegate(fun, opts)
+      {name, args, as, [spec | as_args]} = if Kernel.function_exported?(Kernel.Utils, :defdelegate_each, 2) do
+        Kernel.Utils.defdelegate_each(fun, opts)
+      else
+        Kernel.Utils.defdelegate(fun, opts)
+      end
 
       def unquote(name)(unquote_splicing(args)) do
         {registry, name, labels} = Metric.parse_spec(unquote(spec))
